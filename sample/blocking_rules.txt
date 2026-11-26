@@ -1,0 +1,13 @@
+# Example rules file:  ./run.sh dpi sample/test_dpi.pcap out.pcap --rules sample/blocking_rules.txt
+# Sections: [BLOCKED_IPS]  [BLOCKED_APPS]  [BLOCKED_DOMAINS]   (lines starting with # are comments)
+
+[BLOCKED_IPS]
+192.168.1.50
+
+[BLOCKED_APPS]
+YouTube
+TikTok
+
+[BLOCKED_DOMAINS]
+facebook
+*.instagram.com
