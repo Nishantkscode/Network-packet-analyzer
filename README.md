@@ -1,71 +1,153 @@
 # Network Packet Analyzer (Java)
 
-A Java application that reads network captures (`.pcap` files from Wireshark), shows what is inside each packet, keeps track of the connections between devices, finds out which websites / apps the traffic belongs to, and filters traffic with **IP-based and domain-based rules**.
+A Java-based network packet analyzer that reads network capture (`.pcap`) files, inspects packet contents, tracks network connections, identifies applications and websites, and filters network traffic using IP-based, application-based, and domain-based rules.
 
-This is a **Java port** of a C++ Deep Packet Inspection (DPI) project. It uses only the standard library: no external dependencies.
+Built using **Java 17+** and the standard Java library, with no external dependencies.
 
 ---
 
-## What it does
+## Features
 
-| Feature | How |
+| Feature | Description |
 |---|---|
-| **Read PCAP files** | Parses the 24-byte global header and every packet record (little- and big-endian captures) |
-| **Decode protocols** | Ethernet, then IPv4, then TCP / UDP: MAC addresses, IP addresses, ports, TTL, TCP flags, sequence numbers, payload |
-| **Track connections** | Groups packets into flows using the *five-tuple* (source IP, destination IP, source port, destination port, protocol) |
-| **Identify websites / apps** | Reads the website name from the TLS *Client Hello* (SNI) for HTTPS, the `Host:` header for HTTP, and the port for DNS |
-| **Filter traffic** | Block by source IP, application (YouTube, TikTok, ...) or domain (text match or `*.example.com`) |
-| **Write filtered PCAP** | Allowed packets are saved to a new `.pcap` you can open in Wireshark |
-| **Multi-threaded mode** | Reader, load balancers, fast-path workers and a writer thread connected by thread-safe queues |
+| **PCAP File Parsing** | Reads PCAP files with little-endian and big-endian formats |
+| **Protocol Analysis** | Parses Ethernet, IPv4, TCP, and UDP protocols |
+| **Packet Inspection** | Displays MAC addresses, IP addresses, ports, TTL, TCP flags, sequence numbers, and payload information |
+| **Connection Tracking** | Groups packets into flows using a five-tuple |
+| **Deep Packet Inspection (DPI)** | Extracts application-related information from supported packet contents |
+| **Application Detection** | Identifies applications using TLS SNI, HTTP Host, and DNS information |
+| **Traffic Filtering** | Filters traffic using source IP, application name, or domain |
+| **Filtered PCAP Output** | Saves allowed packets into a new PCAP file that can be opened in Wireshark |
+| **Multithreaded Processing** | Uses reader, load balancer, fast-path workers, and writer components connected through thread-safe queues |
 
 ## Requirements
 
-* **JDK 17 or newer** (check with `java -version` and `javac -version`)
-* Works on Windows, Linux and macOS
+- Java Development Kit (JDK) 17 or newer
+- Windows, Linux, or macOS
+- Wireshark (optional, for viewing PCAP files)
 
-## Quick start
+Check your Java installation:
 
 ```bash
-# Linux / macOS                         # Windows
-./build.sh                              build.bat
-./run-tests.sh                          run-tests.bat
-./run.sh generate sample/my.pcap        run.bat generate sample\my.pcap
-./run.sh dpi sample/test_dpi.pcap out.pcap --block-app YouTube     (run.bat on Windows)
+java -version
+javac -version
 ```
 
-`run.sh` / `run.bat` build the jar automatically the first time. You can also use the jar directly:
-`java -jar out/packet-analyzer.jar <command> ...`
+---
 
-### Commands
+## Getting Started
 
-```
-analyze  <pcap> [max]             Show every packet layer by layer
-scan     <pcap>                   One line per packet, with HTTPS website names
-dpi      <in.pcap> <out.pcap> ... Inspect + filter, single thread
-dpi-mt   <in.pcap> <out.pcap> ... Inspect + filter, multi-threaded
-generate [file.pcap]              Create a sample capture to experiment with
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Nishantkscode/Network-packet-analyzer.git
+cd Network-packet-analyzer
 ```
 
-### Options for `dpi` / `dpi-mt`
+### 2. Build the Project
 
-| Option | Meaning |
+**Windows:**
+
+```bat
+build.bat
+```
+
+**Linux / macOS:**
+
+```bash
+./build.sh
+```
+
+### 3. Run Tests
+
+**Windows:**
+
+```bat
+run-tests.bat
+```
+
+**Linux / macOS:**
+
+```bash
+./run-tests.sh
+```
+
+The project includes 56 automated checks and does not require an external testing library.
+
+### 4. Run the Application
+
+**Windows:**
+
+```bat
+run.bat generate sample\my.pcap
+```
+
+**Linux / macOS:**
+
+```bash
+./run.sh generate sample/my.pcap
+```
+
+The run scripts automatically build the JAR when required.
+
+You can also execute the generated JAR directly:
+
+```bash
+java -jar out/packet-analyzer.jar <command> ...
+```
+
+---
+
+## Available Commands
+
+| Command | Description |
 |---|---|
-| `--block-ip <ip>` | Drop traffic whose **source** is this IP |
-| `--block-app <name>` | Drop an application: Google, YouTube, Facebook, Instagram, Twitter/X, Netflix, Amazon, Microsoft, Apple, WhatsApp, Telegram, TikTok, Spotify, Zoom, Discord, GitHub, Cloudflare (case-insensitive) |
-| `--block-domain <d>` | Drop a domain. `facebook` matches any name containing the text; `*.tiktok.com` matches the domain and all subdomains |
-| `--rules <file>` | Load rules from a file, see `sample/blocking_rules.txt` |
-| `--show-flows` | Also print the table of tracked connections |
-| `--lbs <n>`, `--fps <n>` | (`dpi-mt` only) load-balancer threads (default 2) and fast-path threads per balancer (default 2) |
+| `analyze <pcap> [max]` | Displays packet information layer by layer |
+| `scan <pcap>` | Displays one line per packet, including available website information |
+| `dpi <in.pcap> <out.pcap> ...` | Performs packet inspection and filtering using a single thread |
+| `dpi-mt <in.pcap> <out.pcap> ...` | Performs packet inspection and filtering using multiple threads |
+| `generate [file.pcap]` | Generates a sample PCAP file for testing |
+
+## Traffic Filtering Options
+
+The `dpi` and `dpi-mt` commands support the following options:
+
+| Option | Description |
+|---|---|
+| `--block-ip <ip>` | Drops traffic matching the specified source IP address |
+| `--block-app <name>` | Blocks an application by name |
+| `--block-domain <domain>` | Blocks traffic matching a specified domain |
+| `--rules <file>` | Loads filtering rules from a file |
+| `--show-flows` | Displays tracked network connections |
+| `--lbs <n>` | Sets the number of load-balancer threads (multithreaded mode) |
+| `--fps <n>` | Sets the number of fast-path workers per load balancer (multithreaded mode) |
+
+Supported application names include Google, YouTube, Facebook, Instagram, Twitter/X, Netflix, Amazon, Microsoft, Apple, WhatsApp, Telegram, TikTok, Spotify, Zoom, Discord, GitHub, and Cloudflare.
+
+### Domain Filtering
+
+Examples:
+
+- `facebook` matches domain names containing that text.
+- `*.tiktok.com` matches the domain and its subdomains.
 
 ### Example
+
+Block YouTube traffic, a specific source IP, and Facebook-related domains:
 
 ```bash
 ./run.sh dpi sample/test_dpi.pcap filtered.pcap --block-app YouTube --block-ip 192.168.1.50 --block-domain facebook
 ```
 
-Output (shortened):
+On Windows, use `run.bat` instead of `./run.sh`.
 
-```
+---
+
+## Example Processing Report
+
+The application generates a processing report containing packet statistics, forwarded and dropped packets, tracked connections, and application breakdown.
+
+```text
 +====================================================================+
 |                         PROCESSING REPORT                          |
 +====================================================================+
@@ -86,107 +168,161 @@ Output (shortened):
 | Unknown            16  20.8% ####                                  |
 | DNS                 4   5.2% #                                     |
 | HTTP                4   5.2% #                                     |
-| Amazon              1   1.3%                                       |
-| Apple               1   1.3%                                       |
-| Cloudflare          1   1.3%                                       |
-| Discord             1   1.3%                                       |
-| Facebook            1   1.3%                                       |
-| GitHub              1   1.3%                                       |
-| Google              1   1.3%                                       |
-| Instagram           1   1.3%                                       |
-| Microsoft           1   1.3%                                       |
-| Netflix             1   1.3%                                       |
-| Spotify             1   1.3%                                       |
-| Telegram            1   1.3%                                       |
-  ...
-| TikTok              1   1.3%                                       |
-| Twitter/X           1   1.3%                                       |
 | YouTube             1   1.3%                      (BLOCKED)        |
-| Zoom                1   1.3%                                       |
 +====================================================================+
-
 ```
 
-Open `filtered.pcap` in Wireshark to see that the blocked traffic is gone.
+*The output above is shortened for demonstration.*
 
-> **Using your own capture?** In Wireshark use *File -> Save As* and choose the **pcap** format. The newer *pcapng* format is detected and rejected with a clear message.
+Open `filtered.pcap` in Wireshark to inspect the resulting packets.
+
+**Using your own capture?** Save it from Wireshark in the classic PCAP format. The newer PCAPNG format is detected and rejected with an error message.
 
 ---
 
-## How it works
+## How It Works
 
-```
+### Multithreaded Architecture
+
+```text
                     +--> LB0 --+--> FP0 --+
  Reader --(hash)----+          +--> FP1 --+--> output queue --> Writer --> out.pcap
  (parse packets)    +--> LB1 --+--> FP2 --+
                                +--> FP3 --+
 ```
 
-1. **Reader** reads each packet from the PCAP file and decodes Ethernet, IP and TCP/UDP headers.
-2. The packet's **five-tuple** is hashed to pick a **load balancer (LB)**, which hashes again to pick a **fast path (FP)**. The same connection always lands on the same FP, so each FP keeps its own private flow table and needs no locks.
-3. The **FP** looks up the flow, tries to learn the website name (SNI / Host / DNS), classifies the application, checks the blocking rules and decides *forward* or *drop*. Once a flow is blocked, all its later packets are dropped.
-4. The **Writer** saves forwarded packets to the output file.
+### Processing Pipeline
 
-The single-threaded `dpi` command runs the same `PacketProcessor` in one loop, so both modes give identical results.
+1. **Reader:** Reads packets from the PCAP file and parses Ethernet, IPv4, TCP, and UDP headers.
+2. **Load Balancer:** Uses the packet's five-tuple hash to distribute packets across load-balancer workers.
+3. **Fast Path:** Processes packets, tracks flows, identifies applications, checks filtering rules, and decides whether to forward or drop traffic.
+4. **Output Queue:** Transfers allowed packets safely to the writer.
+5. **Writer:** Writes forwarded packets into the output PCAP file.
 
-**Why SNI?** HTTPS is encrypted, but the very first handshake message (*Client Hello*) is not, and it contains the website name in plain text. That is how the analyzer can tell YouTube from Facebook without decrypting anything.
+The five-tuple consists of:
 
-## Project structure
+- Source IP address
+- Destination IP address
+- Source port
+- Destination port
+- Protocol
 
+Packets belonging to the same direction of a connection are routed to the same fast-path worker, allowing each worker to maintain its own flow table.
+
+The single-threaded and multithreaded modes share the same packet-processing logic.
+
+### Deep Packet Inspection
+
+The analyzer uses available packet information to identify websites and applications.
+
+- **TLS SNI:** Extracts the server name from a supported TLS Client Hello.
+- **HTTP Host:** Extracts the hostname from an HTTP request header.
+- **DNS:** Inspects DNS information to identify domain-related traffic.
+- **Application Classification:** Uses extracted information and protocol details to classify supported applications.
+
+HTTPS payloads are encrypted. The analyzer does not decrypt HTTPS traffic; it uses information available in the handshake when accessible.
+
+---
+
+## Project Structure
+
+```text
+Network-packet-analyzer/
+│
+├── src/
+│   ├── main/
+│   │   └── java/com/nishant/packetanalyzer/
+│   │       ├── Main.java
+│   │       ├── pcap/
+│   │       ├── parser/
+│   │       ├── dpi/
+│   │       ├── engine/
+│   │       ├── tools/
+│   │       └── util/
+│   │
+│   └── test/
+│       └── java/
+│           └── SelfTest.java
+│
+├── sample/
+│   ├── test_dpi.pcap
+│   └── blocking_rules.txt
+│
+├── .gitignore
+├── README.md
+├── build.bat
+├── build.sh
+├── run.bat
+├── run.sh
+├── run-tests.bat
+└── run-tests.sh
 ```
-src/main/java/com/nishant/packetanalyzer/
-  Main.java                 command-line entry point
-  pcap/    PcapReader, PcapWriter, PcapGlobalHeader, RawPacket
-  parser/  PacketParser, ParsedPacket, NetConstants        (Ethernet / IPv4 / TCP / UDP)
-  dpi/     FiveTuple, AppType, SniExtractor, HttpHostExtractor, DnsExtractor, QuicSniExtractor
-  engine/  PacketProcessor, FlowEntry, RuleManager, ThreadSafeQueue,
-           LoadBalancer, FastPath, SingleThreadEngine, MultiThreadEngine, Report
-  tools/   PacketBuilder, GenerateTestPcap                  (build sample packets)
-  util/    Bytes, IpUtils
-src/test/java/.../SelfTest.java      56 automated checks (no libraries needed)
-sample/                              test_dpi.pcap, blocking_rules.txt
-```
 
-## C++ to Java mapping
+### Main Components
 
-| C++ original | Java version |
+| Package | Responsibility |
 |---|---|
-| `pcap_reader.h/.cpp` | `pcap/PcapReader`, `PcapWriter`, `PcapGlobalHeader`, `RawPacket` |
-| `packet_parser.h/.cpp`, `platform.h` | `parser/PacketParser`, `ParsedPacket`, `NetConstants`, `util/Bytes` (replaces `ntohs`/`ntohl`) |
-| `types.h/.cpp` (`FiveTuple`, `AppType`, `sniToAppType`) | `dpi/FiveTuple` (a record), `dpi/AppType` |
-| `sni_extractor.h/.cpp` | `dpi/SniExtractor`, `HttpHostExtractor`, `DnsExtractor`, `QuicSniExtractor` |
-| `TSQueue<T>` in `dpi_mt.cpp` (mutex + condition variables) | `engine/ThreadSafeQueue` (`ReentrantLock` + `Condition`) |
-| `Rules` / `rule_manager.cpp` | `engine/RuleManager` (+ wildcard domains and rules file from the unfinished v2 code) |
-| `FastPath`, `LoadBalancer`, `DPIEngine` in `dpi_mt.cpp` | `engine/FastPath`, `LoadBalancer`, `MultiThreadEngine` |
-| `main_working.cpp` | `engine/SingleThreadEngine` (shares `PacketProcessor` with the multi-threaded engine) |
-| `main.cpp`, `main_simple.cpp` | `Main` commands `analyze` and `scan` |
-| `generate_test_pcap.py` | `tools/GenerateTestPcap` + `PacketBuilder` |
+| `pcap` | Reading and writing PCAP files |
+| `parser` | Parsing Ethernet, IPv4, TCP, and UDP packets |
+| `dpi` | Extracting domain and application information |
+| `engine` | Packet processing, flow tracking, filtering, and multithreading |
+| `tools` | Generating sample PCAP files |
+| `util` | Byte conversion and IP address utilities |
 
-## Verified against the C++ original
+---
 
-I built the C++ version and compared both programs on the same capture:
+## Technical Implementation
 
-* `dpi` output file is **byte-for-byte identical** to the C++ output file.
-* `analyze` and `scan` print **identical text** (1,709 lines for the sample).
-* The multi-threaded engine produces the **same set of packets** as the single-threaded one on a 539,000-packet / 266,005-flow capture, for thread layouts from 1x1 up to 8x2, and 40 repeated runs had no failures.
+1. **Five-Tuple Flow Tracking:** Groups packets using network and transport-layer information.
+2. **Thread-Safe Communication:** Uses locks, conditions, and queues to coordinate processing workers.
+3. **Domain Matching:** Supports domain text matching and wildcard subdomain rules.
+4. **Application Classification:** Distinguishes HTTP, HTTPS, DNS, QUIC, and supported applications.
+5. **Graceful Thread Shutdown:** Uses staged queue closure and worker coordination.
+6. **Packet Validation:** Handles unsupported packet formats and invalid input with clear errors.
+7. **PCAP Compatibility Checks:** Detects unsupported PCAPNG files.
 
-## Deliberate improvements over the C++ code
+---
 
-1. **Domain matching bug fixed.** The C++ matched `t.co` and `x.com` as plain substrings, so `www.microsoft.com` ("microsof**t.co**m") and `www.netflix.com` ("netfli**x.com**") were labelled *Twitter/X*. Short domains now match only as a whole domain or subdomain.
-2. **All worker threads are used.** The C++ reused the same hash remainder at both balancing levels, so half the fast-path threads never received work. Java uses the next part of the hash for the second level.
-3. **Safe shutdown.** The C++ slept 500 ms and hoped the queues were empty. Java closes the queues stage by stage and waits for each to drain, so no packet can be lost, and a failing worker shuts the pipeline down instead of hanging.
-4. **Plain HTTP is labelled HTTP**, not HTTPS, even for unknown sites.
-5. UDP port 443 is labelled QUIC; IP fragments and Ethernet padding no longer confuse the parser; `Host:` is only read at the start of a header line; app and domain names are case-insensitive; invalid IPs and options give clear errors; `pcapng` files are detected.
+## Known Limitations
 
-## Known limitations
+- **IPv4 Only:** IPv6 packets are not supported.
+- **Ethernet Only:** Other link-layer formats are not supported.
+- **Connection Direction:** Forward and reverse traffic are tracked as separate flows.
+- **TLS SNI Extraction:** The complete Client Hello must be available in a single TCP packet. Client Hello messages split across TCP segments are not recognised.
+- **QUIC Identification:** QUIC payloads are encrypted, so application identification is limited.
+- **Multithreaded Performance:** The reader and parsing stages can become bottlenecks. Multithreaded processing does not guarantee faster execution.
 
-* **Replies are tracked separately.** A connection and its replies (server to client) have different five-tuples, so replies are listed as their own "Unknown" flows and are not dropped when the request flow is blocked. This is the same behaviour as the original. Merging both directions into one flow is a natural next step.
-* **IPv4 only.** IPv6 packets are skipped. Ethernet links only.
-* **SNI needs the whole Client Hello in one packet.** A hello split across TCP segments is not recognised. QUIC/HTTP3 payloads are encrypted, so QUIC flows are labelled only by port.
-* **The multi-threaded mode is not faster on this workload** (about 4 s for 539,000 packets in both modes): reading and parsing happens on one thread, so it is the bottleneck. The mode is there to show the pipeline architecture.
+---
 
-## Running the tests
+## Future Improvements
 
-```bash
-./run-tests.sh      # Windows: run-tests.bat
-```
+- Support for IPv6 packet parsing.
+- Bidirectional flow tracking.
+- TCP stream reassembly for improved TLS SNI extraction.
+- Improved QUIC and HTTP/3 application identification.
+- Performance optimization of the packet-reading pipeline.
+- Additional protocol support.
+
+---
+
+## Technologies Used
+
+- Java 17+
+- PCAP File Format
+- Ethernet, IPv4, TCP, and UDP
+- Deep Packet Inspection (DPI)
+- Multithreading
+- Thread-Safe Queues
+- Wireshark
+
+---
+
+## Author
+
+**Nishant Kumar Sharma**
+
+GitHub: [@Nishantkscode](https://github.com/Nishantkscode)
+
+---
+
+If you find this project useful, feel free to explore the repository, test the application, and share feedback.
